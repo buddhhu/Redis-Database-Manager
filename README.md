@@ -1,7 +1,9 @@
 ## A Telegram Bot to manage [Redis](https://redislabs.com) database.
-
 ---
-### Installation
+### Direct deploy on heroku
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+---
+### Manual Deployment
 #### python3, git is required
 
 - Clone repo `git clone https://github.com/buddhhu/Redis-Database-Manager.git`
