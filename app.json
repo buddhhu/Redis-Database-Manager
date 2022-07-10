@@ -12,7 +12,7 @@
     "repository": "https://github.com/buddhhu/Redis-Database-Manager",
     "success_url": "https://t.me/TheUltroid",
     "env": {
-        "APP_ID": {
+        "API_ID": {
             "description": "Your api id, from my.telegram.org",
             "value": "6",
             "required": false
