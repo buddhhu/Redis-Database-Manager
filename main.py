@@ -23,7 +23,7 @@ try:
         bot_token=ENV.BOT_TOKEN
     )
 except Exception as ex:
-    print(str(type(ex)) + ": " + str(ex))
+    print(f"{str(type(ex))}: {str(ex)}")
     exit()
 
 
@@ -50,10 +50,7 @@ def redis_connection(redis_uri, redis_port, redis_password):
             password=redis_password,
             decode_responses=True,
         )
-        if connection.ping():
-            return connection
-        else:
-            return None
+        return connection if connection.ping() else None
     except ConnectionError:
         return False
 
@@ -67,12 +64,10 @@ def perform_redis_action(
     if method not in ["get", "set", "delete"]:
         return False, "Wrong Method"
     if method == "set" and value is not None:
-        message = connection.set(key, value)
-        if message:
+        if message := connection.set(key, value):
             return True, "Success"
     elif method == "get":
-        message = connection.get(key)
-        if message:
+        if message := connection.get(key):
             return True, message
         else:
             return False, "No such key"
@@ -84,15 +79,11 @@ def perform_redis_action(
             return False, "Key not found"
         else:
             return None, "Error :("
-    else:
-        pass  # todo
 
 
 def redis_backup(connection, userid):
-    filename = "redis-" + str(userid) + ".json"
-    redis_data = {}
-    for keys in connection.keys():
-        redis_data.update({keys: connection.get(keys)})
+    filename = f"redis-{str(userid)}.json"
+    redis_data = {keys: connection.get(keys) for keys in connection.keys()}
     with open(filename, "w") as z:
         z.write(json.dumps(redis_data, indent=4))
     return filename
@@ -129,15 +120,17 @@ async def flush(event):
     if event.sender_id not in senders_data.keys():
         return await event.reply("You have not sent me your Redis credentials")
     redis_data = senders_data[event.chat_id]
-    connection = redis_connection(
-        redis_data["redis_uri"], redis_data["redis_port"], redis_data["redis_password"]
-    )
-    if not connection:
+    if connection := redis_connection(
+        redis_data["redis_uri"],
+        redis_data["redis_port"],
+        redis_data["redis_password"],
+    ):
+        await event.reply(
+            "**⚠️ This will clear your whole Redis Database!\nDo you want to proceed?**",
+            buttons=[Button.inline("Yes"), Button.inline("No")],
+        )
+    else:
         return await event.reply("Can't connect to redis database :(")
-    await event.reply(
-        "**⚠️ This will clear your whole Redis Database!\nDo you want to proceed?**",
-        buttons=[Button.inline("Yes"), Button.inline("No")],
-    )
 
 
 @client.on(
@@ -263,10 +256,12 @@ async def redis_action(event):
         "redis_password": redis_password.message,
     }
 
-    connection = redis_connection(redis_uri, int(redis_port), redis_password.message)
-    if not connection:
+    if connection := redis_connection(
+        redis_uri, int(redis_port), redis_password.message
+    ):
+        await event.reply("Connected to your redis database")
+    else:
         return await event.reply("Failed to connect to redis database :(")
-    await event.reply("Connected to your redis database")
 
 
 @client.on(
